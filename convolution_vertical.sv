@@ -26,7 +26,7 @@ wire	[11:0]	mDATA_2;
 reg		[11:0]	mDATAd [2:0][2:0];
 reg		[11:0]	mult [2:0][2:0];
 reg		[11:0]	mCCD_R;
-reg		[12:0]	mCCD_G;
+reg		[11:0]	mCCD_G;
 reg		[11:0]	mCCD_B;
 reg		[11:0]	mgray;
 reg				mDVAL;
@@ -47,21 +47,24 @@ RAW2GRAY				u9	(
 							.oGreen(mCCD_G),
 							.oBlue(mCCD_B),
 							.oDVAL(mDVAL2),
-							.iX_Cont(oX_Cont),
-							.iY_Cont(oY_Cont)
+							.iX_Cont(iX_Cont),
+							.iY_Cont(iY_Cont)
 						   );
 
 line_buffer3 	u0	(	.clken(mDVAL2),
 						.clock(iCLK),
 						.shiftin(mCCD_R),
-						.taps0x(mDATA_2),
+						.taps0x(mDATA_0),
 						.taps1x(mDATA_1),
-                        .taps2x(mDATA_0)	);
+                        .taps2x(mDATA_2)	);
 
 assign	oRed	=	out;
 assign	oGreen	=	out;
 assign	oBlue	=	out;
 assign	oDVAL	=	mDVAL;
+
+// negation + edge logic
+assign out = ((iX_Cont > 9) && (iX_Cont < 1270) && (iY_Cont > 9) && (iY_Cont < 1270)) ? (sum[11] ? (~sum + 1) : sum) : 12'b0;
 
 // Assigning sobel filter values
 assign sobel[0][0] = -1; 
@@ -73,16 +76,14 @@ assign sobel[1][2] = 2;
 assign sobel[2][0] = -1; 
 assign sobel[2][1] = 0; 
 assign sobel[2][2] = 1;
-genvar m;
-genvar n; 
 
 always@(posedge iCLK or negedge iRST)
 begin
 	if(!iRST)
 	begin
-		mDATAd[0][0]<=	mDATA_0;
-		mDATAd[1][0]<=	mDATA_1;
-        mDATAd[2][0]<=	mDATA_2;
+		mDATAd[0][0]<=	0;
+		mDATAd[1][0]<=	0;
+        mDATAd[2][0]<=	0;
 		mDATAd[0][1]<=	0;
 		mDATAd[1][1]<=	0;
         mDATAd[2][1]<=	0;
@@ -93,33 +94,32 @@ begin
 	end
 	else
 	begin
+		mDATAd[0][0] <=	mDATA_0;
+		mDATAd[1][0] <=	mDATA_1;
+        mDATAd[2][0] <=	mDATA_2;
 		mDATAd[0][1]	<=	mDATAd[0][0];
 		mDATAd[1][1]	<=	mDATAd[1][0];
         mDATAd[2][1]	<=	mDATAd[2][0];
         mDATAd[0][2]	<=	mDATAd[0][1];
 		mDATAd[1][2]	<=	mDATAd[1][1];
-        mDATAd[2][2]	<=	mDATAd[1][2];
+        mDATAd[2][2]	<=	mDATAd[2][1];
 		mDVAL		<=	{iY_Cont[0]|iX_Cont[0]}	?	1'b0	:	iDVAL;
 	end
 end
-generate
-	for (m = 0;  m < 3; ++m) begin : outside
-		for(n = 0; n < 3; ++n) begin : inner
-			assign mult[m][n] = (iRST) ? (mDATAd[2-m][2-n] * sobel[m][n]) : 0;
-		end
-	end
-endgenerate
-
-assign sum = mult[0][0] + mult[0][1] + mult[0][2] + mult[1][0] + mult [1][1] + mult[1][2] + mult[2][0] + mult[2][1] + mult[2][2];
-// not sure if this works
-always @* begin
-  if (sum[11] == 1'b1) begin
-    out = -sum;
-  end
-  else begin
-    out = sum;
-  end
+always_ff @(posedge iCLK or negedge iRST) begin
+    if (!iRST) begin
+        sum <= 0;
+    end else begin
+        sum <= mDATAd[0][0] * sobel[0][0] + mDATAd[0][1] * sobel[0][1] + mDATAd[0][2] * sobel[0][2] +
+               mDATAd[1][0] * sobel[1][0] + mDATAd[1][1] * sobel[1][1] + mDATAd[1][2] * sobel[1][2] +
+               mDATAd[2][0] * sobel[2][0] + mDATAd[2][1] * sobel[2][1] + mDATAd[2][2] * sobel[2][2];
+    end
 end
+
+
+//assign sum = mult[0][0] + mult[0][1] + mult[0][2] + mult[1][0] + mult [1][1] + mult[1][2] + mult[2][0] + mult[2][1] + mult[2][2];
+// not sure if this works
+
 
 endmodule
 
