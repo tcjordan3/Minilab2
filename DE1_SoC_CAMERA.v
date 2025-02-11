@@ -261,7 +261,10 @@ wire	       [11:0]			sCCDv_R;
 wire	       [11:0]			sCCDv_G;
 wire	       [11:0]			sCCDv_B;
 wire								sCCDv_DVAL;
-
+wire	       [11:0]			sCCDh_R;
+wire	       [11:0]			sCCDh_G;
+wire	       [11:0]			sCCDh_B;
+wire								sCCDh_DVAL;
 wire								sdram_ctrl_clk;
 wire	       [9:0]			oVGA_R;   				//	VGA Red[9:0]
 wire	       [9:0]			oVGA_G;	 				//	VGA Green[9:0]
@@ -362,11 +365,24 @@ convolution_vertical				u10	(
 							.iY_Cont(Y_Cont)
 						   );
 
+convolution_horizontal				u11	(	
+							.iCLK(D5M_PIXLCLK),
+							.iRST(DLY_RST_1),
+							.iDATA(mCCD_DATA),
+							.iDVAL(mCCD_DVAL),
+							.oRed(sCCDh_R),
+							.oGreen(sCCDh_G),
+							.oBlue(sCCDh_B),
+							.oDVAL(sCCDh_DVAL),
+							.iX_Cont(X_Cont),
+							.iY_Cont(Y_Cont)
+						   );
+
 ////////////////////////////////
-assign sCCD_R = SW[2] ? sCCDv_R : (SW[1] ? sCCDg_R : sCCDr_R);
-assign sCCD_G = SW[2] ? sCCDv_G : (SW[1] ? sCCDg_G : sCCDr_G);
-assign sCCD_B = SW[2] ? sCCDv_B : (SW[1] ? sCCDg_B : sCCDr_B);
-assign sCCD_DVAL = SW[2] ? sCCDv_R : (SW[1] ? sCCDg_DVAL : sCCDr_DVAL);
+assign sCCD_R = SW[3] ? sCCDh_R : (SW[2] ? sCCDv_R : (SW[1] ? sCCDg_R : sCCDr_R));
+assign sCCD_G = SW[3] ? sCCDh_G : (SW[2] ? sCCDv_G : (SW[1] ? sCCDg_G : sCCDr_G));
+assign sCCD_B = SW[3] ? sCCDh_B : (SW[2] ? sCCDv_B : (SW[1] ? sCCDg_B : sCCDr_B));
+assign sCCD_DVAL = SW[3] ? sCCDh_DVAL : (SW[2] ? sCCDv_DVAL : (SW[1] ? sCCDg_DVAL : sCCDr_DVAL));
 ///////////////////////////////
 
 //Frame count display
