@@ -1,3 +1,5 @@
+// CODED BY US
+
 module RAW2GRAY(	oRed,
 				oGreen,
 				oBlue,

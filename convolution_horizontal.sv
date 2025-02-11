@@ -1,6 +1,6 @@
 // CODED BY US
 
-module convolution_vertical(
+module convolution_horizontal(
 	oRed,
 	oGreen,
 	oBlue,
@@ -85,13 +85,13 @@ assign out = ((iX_Cont > 9) && (iX_Cont < 1270) && (iY_Cont > 9) && (iY_Cont < 1
 
 // Assigning sobel filter values
 assign sobel[0][0] = -1; 
-assign sobel[0][1] = 0; 
-assign sobel[0][2] = 1; 
-assign sobel[1][0] = -2; 
+assign sobel[0][1] = -2; 
+assign sobel[0][2] = -1; 
+assign sobel[1][0] = 0; 
 assign sobel[1][1] = 0; 
-assign sobel[1][2] = 2; 
-assign sobel[2][0] = -1; 
-assign sobel[2][1] = 0; 
+assign sobel[1][2] = 0; 
+assign sobel[2][0] = 1; 
+assign sobel[2][1] = 2; 
 assign sobel[2][2] = 1;
 
 always@(posedge iCLK or negedge iRST)
